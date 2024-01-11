@@ -5,13 +5,13 @@ It uses FastAPI and pymongo for integration with a noSQL database(MongoDB).
 ## Running 
 1. Clone repository.
 2. pip install requirements.txt
-3. Create a new .env file at the base of the project with these values:
-	SECRET_KEY="Generate a random 32-byte (256-bit) secret key"
-	ALGORITHM=HS256
-	obs.: for the SECRET_KEY the following python code can be used:
-		import secrets
-		secret_key = secrets.token_urlsafe(32)
-		print(secret_key)
+3. Create a new .env file at the base of the project with these values:<br/>
+	SECRET_KEY="Generate a random 32-byte (256-bit) secret key"<br/>
+	ALGORITHM=HS256<br/>
+	obs.: for the SECRET_KEY the following python code can be used:<br/>
+		import secrets<br/>
+		secret_key = secrets.token_urlsafe(32)<br/>
+		print(secret_key)<br/>
 4. Start server by running uvicorn app.main:app 
 
 ## API Documentation
