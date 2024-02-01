@@ -1,4 +1,3 @@
-from typing import List
 from pydantic import BaseModel, Field
 
 
@@ -38,14 +37,24 @@ class Recipe(BaseModel):
     categories : List[str]
         The list of categories or tags associated with the recipe.
     """
-    id: str = Field(alias='_id')
     title: str
     author: str
-    ingredients: List[str]
+    ingredients: list[str]
     instructions: str
-    categories: List[str]
+    categories: list[str]
 
-class RecipeDetails(Recipe):
+class RecipeInfo(Recipe):
+    """
+    Pydantic model representing a recipe full info.
+
+    Attributes
+    ----------
+    id : str
+        The identifier of the recipe (aliased as '_id').
+    """
+    id: str = Field(alias='_id')
+
+class RecipeDetails(RecipeInfo):
     """
     Pydantic model representing detailed information about a recipe, including comments.
 
@@ -54,4 +63,4 @@ class RecipeDetails(Recipe):
     comments : List[Comment]
         The list of comments associated with the recipe.
     """
-    comments: List[Comment] = []
+    comments: list[Comment] = []

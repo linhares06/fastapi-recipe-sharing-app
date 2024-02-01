@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List
+from typing import Optional
 
 
 class User(BaseModel):
@@ -14,7 +14,7 @@ class User(BaseModel):
         The hashed password of the user.
     """
     username: str = Field(max_length=50, description='The username of the user.')
-    password: str = Field(description='The hashed password of the user.')
+    password: Optional[str] = Field(default= None, description='The hashed password of the user.')
 
 class Token(BaseModel):
     """
@@ -29,3 +29,6 @@ class Token(BaseModel):
     """
     access_token: str
     token_type: str
+
+class TokenData(BaseModel):
+    username: str | None = None

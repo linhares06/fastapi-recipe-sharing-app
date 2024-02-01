@@ -1,10 +1,11 @@
-from fastapi import APIRouter, HTTPException, status, Header
+from fastapi import APIRouter, HTTPException, Depends
+from fastapi.security import OAuth2PasswordRequestForm
 from passlib.context import CryptContext
 from pymongo.errors import DuplicateKeyError
 from typing import Annotated
 
-from app.api.models.user import User, Token
-from app.api.dependencies import create_jwt_token, decode_token
+from app.api.models.user import User
+from app.api.dependencies import authenticate_user, get_current_user
 from app.utils import convert_str_to_objectid
 from app.database import RecipeDatabase
 
@@ -44,63 +45,31 @@ def add_user(user: User):
 
     except DuplicateKeyError:
         raise HTTPException(status_code=400, detail='Username already in use.')
-    
-@router.post('/login', response_model=Token)
-def login(user: User):
-    """
-    Log in a user and return an access token.
-
-    Parameters
-    ----------
-    user : User
-        The user information including username and password.
-
-    Returns
-    -------
-    dict
-        The access token and token type.
-
-    Raises
-    ------
-    HTTPException
-        If the provided credentials are invalid.
-    """
-    user = recipes_db.users_collection.find_one({'username': user.username})
-
-    if user and password_context.verify(user.password, user['password']):
-        # Generate a JWT token
-        token = create_jwt_token({'username': user['username']})
-
-        return {"access_token": token, "token_type": "bearer"}
-
-    # Return an error if credentials are invalid
-    raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Invalid credentials')
 
 @router.delete('/delete/{user_id}')
-def delete_user(user_id: str, token: Annotated[str | None, Header()]):
+def delete_user(user_id: str, current_user: Annotated[User, Depends(get_current_user)]):
     """
     Delete a user and associated data.
 
     Parameters
     ----------
     user_id : str
-        The identifier of the user to be deleted.
-    token : str, optional, header
-        The JWT token for authentication.
-
-    Returns
-    -------
-    dict
-        A message indicating the success of the operation.
+        The user ID to be deleted.
+    current_user : User
+        The currently logged-in user.
 
     Raises
     ------
     HTTPException
         If the user is not found.
+
+    Returns
+    -------
+    dict
+        A message indicating the success of the deletion.
     """
-    # Get logged in user from token
-    user = decode_token(token)
-    username = user['username']
+    # Get logged in user
+    username = current_user.username
 
     # Convert the str id to ObjectId
     user_id = convert_str_to_objectid(user_id)
@@ -121,3 +90,37 @@ def delete_user(user_id: str, token: Annotated[str | None, Header()]):
         raise HTTPException(status_code=404, detail='User not found')
     
     return {"message": "User deleted successfully"}
+
+@router.post('/token')
+async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
+    """
+    Generate an access token for the given user credentials.
+
+    Parameters
+    ----------
+    form_data : OAuth2PasswordRequestForm
+        User credentials.
+
+    Returns
+    -------
+    dict
+        Access token response.
+    """
+    return authenticate_user(form_data.username, form_data.password)
+
+@router.get('/me')
+async def read_current_user(current_user: Annotated[User, Depends(get_current_user)]) -> User:
+    """
+    Retrieve information about the currently logged-in user.
+
+    Parameters
+    ----------
+    current_user : User
+        The currently logged-in user.
+
+    Returns
+    -------
+    User
+        User information.
+    """
+    return current_user
